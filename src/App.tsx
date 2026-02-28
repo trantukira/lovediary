@@ -71,13 +71,14 @@ const compressImage = (file: File, maxWidth = 800): Promise<string> => {
   });
 };
 
-// --- GEMINI AI SETUP ---
+// --- GEMINI AI SETUP (ĐÃ FIX LỖI API) ---
 const callGeminiAPI = async (prompt: string) => {
   const apiKey = "AIzaSyBSZD_3aC-VhtGBCaPW1RJIGss-uMfVxEE";
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+  // Sử dụng model 1.5 flash ổn định thay vì bản preview
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
   const payload = { contents: [{ parts: [{ text: prompt }] }] };
   const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
-  const backoff = [1000, 2000, 4000, 8000, 16000];
+  const backoff = [1000, 2000, 4000];
 
   for (let i = 0; i <= backoff.length; i++) {
     try {
@@ -90,7 +91,7 @@ const callGeminiAPI = async (prompt: string) => {
       const data = await response.json();
       return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     } catch (error) {
-      if (i === backoff.length) return "Đã có lỗi xảy ra. Thử lại sau nhé!";
+      if (i === backoff.length) return "Đã có lỗi kết nối AI. Bạn thử lại nhé!";
       await delay(backoff[i]);
     }
   }
@@ -115,6 +116,9 @@ const FloatingBackground = () => {
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
       <style>{`
+        /* IMPORT GOOGLE FONT ĐỂ FIX LỖI CHỮ "Đ" */
+        @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap');
+
         @keyframes floatUp {
           0% { transform: translateY(110vh) rotate(0deg) scale(0.8); opacity: 0; }
           10% { opacity: 0.6; }
@@ -126,6 +130,9 @@ const FloatingBackground = () => {
           animation-name: floatUp;
           animation-timing-function: linear;
           animation-iteration-count: infinite;
+        }
+        .romantic-font {
+          font-family: 'Dancing Script', cursive;
         }
       `}</style>
       {elements.map((el) => (
@@ -381,7 +388,7 @@ export default function App() {
 
   const handleGenerateMessage = async () => {
     if (!newWish.author) {
-      setNewWish(prev => ({ ...prev, text: "Hãy chọn tên bạn trước khi nhờ AI viết nhé! 💕" }));
+      setNewWish(prev => ({ ...prev, text: "Hãy chọn tên bạn trước nhé! 💕" }));
       return;
     }
     setIsGeneratingMessage(true);
@@ -471,7 +478,8 @@ export default function App() {
         
         {/* HEADER */}
         <div className="text-center mb-12">
-          <h1 className="text-5xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500 mb-4 drop-shadow-sm pb-2" style={{ fontFamily: 'cursive, sans-serif' }}>
+          {/* ĐÃ FIX FONT CHỮ LỖI */}
+          <h1 className="text-5xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500 mb-4 drop-shadow-sm pb-2 romantic-font">
             Chuyện đôi mình 💕
           </h1>
           <p className="text-gray-500 font-medium tracking-wide">Khắc ghi từng khoảnh khắc, gói trọn cả yêu thương ✨</p>
@@ -727,7 +735,7 @@ export default function App() {
                   </div>
                 </div>
                 <div className="p-6 flex-1 flex flex-col bg-gradient-to-b from-white/50 to-white/10">
-                  <div className="flex items-center text-xs font-bold text-pink-500 mb-3 bg-pink-50/80 px-3 py-1.5 rounded-full self-start shadow-sm border border-pink-100">
+                  <div className="flex items-center text-xs font-bold text-pink-500 mb-3 bg-pink-50/80 inline-flex px-3 py-1.5 rounded-full self-start shadow-sm border border-pink-100">
                     <Clock className="w-3.5 h-3.5 mr-1.5 inline" /> {new Date(memory.date).toLocaleDateString('vi-VN')}
                   </div>
                   <p className="text-gray-700 leading-relaxed text-sm font-medium line-clamp-3">{memory.text}</p>
