@@ -7,7 +7,7 @@ import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from 'fi
 
 // --- FIREBASE SETUP CỦA BẠN ---
 const firebaseConfig = {
-  apiKey: "AIzaSyCKmKnMUBKmnAI2J2ZHCzylH9_8ygCn3Rk",
+  apiKey: "AIzaSyBkqtmCYTSZ0T7xPwrBIfuSPAzyAG7WgBk",
   authDomain: "love-diary-3c82d.firebaseapp.com",
   projectId: "love-diary-3c82d",
   storageBucket: "love-diary-3c82d.firebasestorage.app",
@@ -73,7 +73,7 @@ const compressImage = (file: File, maxWidth = 800): Promise<string> => {
 
 // --- GEMINI AI SETUP ---
 const callGeminiAPI = async (prompt: string) => {
-  const apiKey = "AIzaSyBSZD_3aC-VhtGBCaPW1RJIGss-uMfVxEE";
+  const apiKey = "AIzaSyCKmKnMUBKmnAI2J2ZHCzylH9_8ygCn3Rk ";
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
   const payload = { contents: [{ parts: [{ text: prompt }] }] };
   const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
