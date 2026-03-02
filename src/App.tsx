@@ -71,10 +71,9 @@ const compressImage = (file: File, maxWidth = 800): Promise<string> => {
   });
 };
 
-// --- GEMINI AI SETUP (ĐÃ FIX LỖI API) ---
+// --- GEMINI AI SETUP ---
 const callGeminiAPI = async (prompt: string) => {
   const apiKey = "AIzaSyBSZD_3aC-VhtGBCaPW1RJIGss-uMfVxEE";
-  // Sử dụng model 1.5 flash ổn định thay vì bản preview
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
   const payload = { contents: [{ parts: [{ text: prompt }] }] };
   const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
@@ -116,7 +115,6 @@ const FloatingBackground = () => {
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
       <style>{`
-        /* IMPORT GOOGLE FONT ĐỂ FIX LỖI CHỮ "Đ" */
         @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap');
 
         @keyframes floatUp {
@@ -185,13 +183,7 @@ export default function App() {
         setAuthError(null);
       } catch (err: any) {
         console.error("Auth error:", err);
-        if (err.code === 'auth/configuration-not-found' || err.message.includes('configuration-not-found')) {
-           setAuthError("Bạn chưa bật quyền Đăng nhập Ẩn danh (Anonymous) trên Firebase!");
-        } else if (err.code === 'auth/unauthorized-domain') {
-           setAuthError("Tên miền hiện tại chưa được cấp quyền trong Firebase Authentication.");
-        } else {
-           setAuthError(`Lỗi Firebase: ${err.message}`);
-        }
+        setAuthError(`Lỗi Firebase: ${err.message}`);
       }
     };
     initAuth();
@@ -209,7 +201,7 @@ export default function App() {
   useEffect(() => {
     if (!user) return;
 
-    // 1. Đồng bộ Cài đặt & Thông tin
+    // Đồng bộ Cài đặt & Thông tin
     const unsubSettings = onSnapshot(
       collection(db, 'love_settings'),
       (snapshot) => {
@@ -229,11 +221,11 @@ export default function App() {
       },
       (err) => {
         console.error(err);
-        setAuthError("Lỗi đọc dữ liệu Firestore. Bạn đã cấp quyền Rules chưa?");
+        setAuthError("Lỗi đọc dữ liệu Firestore.");
       }
     );
 
-    // 2. Đồng bộ Lời nhắn
+    // Đồng bộ Lời nhắn
     const unsubWishes = onSnapshot(
       collection(db, 'love_wishes'),
       (snapshot) => {
@@ -241,11 +233,10 @@ export default function App() {
         snapshot.forEach(d => w.push({ id: d.id, ...d.data() }));
         w.sort((a, b) => b.timestamp - a.timestamp);
         setWishes(w);
-      },
-      (err) => console.error(err)
+      }
     );
 
-    // 3. Đồng bộ Kỉ niệm
+    // Đồng bộ Kỉ niệm
     const unsubMemories = onSnapshot(
       collection(db, 'love_memories'),
       (snapshot) => {
@@ -253,11 +244,10 @@ export default function App() {
         snapshot.forEach(d => m.push({ id: d.id, ...d.data() }));
         m.sort((a, b) => b.timestamp - a.timestamp);
         setMemories(m);
-      },
-      (err) => console.error(err)
+      }
     );
 
-    // 4. Đồng bộ Bucket List
+    // Đồng bộ Bucket List
     const unsubBucket = onSnapshot(
       collection(db, 'love_bucketList'),
       (snapshot) => {
@@ -265,24 +255,21 @@ export default function App() {
         snapshot.forEach(d => b.push({ id: d.id, ...d.data() }));
         b.sort((a, b) => a.timestamp - b.timestamp);
         setBucketList(b);
-      },
-      (err) => console.error(err)
+      }
     );
 
     return () => { unsubSettings(); unsubWishes(); unsubMemories(); unsubBucket(); };
   }, [user]);
 
-  // --- HANDLERS LƯU DỮ LIỆU LÊN ĐÁM MÂY ---
-  const updateSettings = async (newProfiles: any, newStartDate: any) => {
+  // --- HÀM LƯU DỮ LIỆU (ĐÃ FIX LỖI GHI ĐÈ) ---
+  const updateSettings = async (dataToUpdate: any) => {
     if (!user) return;
-    await setDoc(doc(db, 'love_settings', 'main'), {
-      profiles: newProfiles || profiles,
-      startDate: newStartDate || startDate
-    }, { merge: true });
+    // Bật merge: true để chỉ cập nhật ĐÚNG trường bị thay đổi, không ghi đè mất dữ liệu khác
+    await setDoc(doc(db, 'love_settings', 'main'), dataToUpdate, { merge: true });
   };
 
   const saveStartDate = () => {
-    updateSettings(null, startDate);
+    updateSettings({ startDate: startDate }); // Chỉ gửi ngày lên
     setIsEditingStart(false);
   };
 
@@ -292,7 +279,7 @@ export default function App() {
       [person]: { ...profiles[person], [field]: value }
     };
     setProfiles(updatedProfiles);
-    updateSettings(updatedProfiles, null);
+    updateSettings({ profiles: updatedProfiles }); // Chỉ gửi mảng profile lên
   };
 
   const handleProfileImageUpload = async (person: string, e: any) => {
@@ -414,7 +401,6 @@ export default function App() {
           <AlertTriangle className="w-20 h-20 text-red-500 mx-auto mb-6 animate-pulse" />
           <h2 className="text-3xl font-extrabold text-red-600 mb-3">Ối, Lỗi Xác Thực!</h2>
           <p className="text-gray-700 mb-6 font-medium text-lg leading-relaxed">{authError}</p>
-          
           <div className="text-left bg-red-50/80 p-6 rounded-3xl text-sm text-red-900 space-y-3 border border-red-200">
             <p className="font-bold text-base flex items-center"><CheckCircle className="w-5 h-5 mr-2" /> Cách khắc phục nhanh:</p>
             <ol className="list-decimal list-inside space-y-2 ml-1">
@@ -478,7 +464,6 @@ export default function App() {
         
         {/* HEADER */}
         <div className="text-center mb-12">
-          {/* ĐÃ FIX FONT CHỮ LỖI */}
           <h1 className="text-5xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500 mb-4 drop-shadow-sm pb-2 romantic-font">
             Chuyện đôi mình 💕
           </h1>
@@ -849,3 +834,5 @@ export default function App() {
     </div>
   );
 }
+
+
